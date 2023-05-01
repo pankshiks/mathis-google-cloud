@@ -21,8 +21,24 @@ function uploadFile(base64Data) {
   // Get a reference to your bucket
   const bucket = storage.bucket(bucketName);
   // Define the name of the file to be uploaded to your bucket
-  // const filename = `${base64Data.file_name}.` + imageType[1];
-  const filename = base64Data.file_name;
+  let rawFileName = base64Data.file_name.toLowerCase();
+
+  if (rawFileName.includes("-")) {
+    rawFileName = rawFileName.split("-");
+    let fileName1 = rawFileName[rawFileName.length - 1].split(".");
+    fileName1 = fileName1[0].replaceAll(" ", "");
+    // console.log({ fileName1: fileName1 });
+    var newFileName = fileName1;
+  } else {
+    rawFileName = rawFileName.split(".");
+    let fileName1 = rawFileName[rawFileName.length - 2].replaceAll(" ", "");
+    var newFileName = fileName1;
+  }
+
+  const finalFileName = `${base64Data.first_name}.${base64Data.last_name}.${newFileName}`;
+
+  // console.log({ fileName: finalFileName });
+  const filename = finalFileName;
   // Create a write stream to upload the file to your bucket
   const remoteFile = bucket.file(`${base64Data.folder_name}/` + filename);
   const writeStream = remoteFile.createWriteStream({
@@ -56,7 +72,6 @@ async function getFolderNames() {
     // Loop through all the objects and extract folder names
     files.forEach((file) => {
       const folderName = file.name.split("/")[0];
-      console.log({ file });
       if (!folders.includes(folderName)) {
         folders.push(folderName);
       }
@@ -70,7 +85,6 @@ async function getFolderNames() {
 
 app.post("/upload", async (req, res) => {
   const image = req.body;
-  console.log({ image: image });
   const result = await uploadFile(image);
   if (result) {
     res.send("Success");
